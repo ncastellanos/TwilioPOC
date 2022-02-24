@@ -51,6 +51,8 @@ namespace TwilioPOC.Controllers
             {
                 await SendEmailWithTemplateAndCustomFieldsAsync();
 
+                await SendEmailWithTemplateAndCustomFieldsAndTrackingAsync();
+
                 await SendEmailWithTemplateAsync();
                 await SendEmailWithTemplateAndTrackingAsync();
 
@@ -245,6 +247,80 @@ namespace TwilioPOC.Controllers
                 HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
                 TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e",
                 Personalizations = personalizations
+            };
+
+            msg.Contents = new List<Content>(){
+                new Content(){
+                    Type = "text/html",
+                }
+            };
+
+            msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
+            var client = new SendGridClient("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");
+            var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
+
+            Console.WriteLine(response.Headers);
+        }
+
+        private async Task SendEmailWithTemplateAndCustomFieldsAndTrackingAsync()
+        {
+            var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
+            var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
+            Dictionary<string, string> substitutionsValues = new Dictionary<string, string>
+            {
+                { "FIELD_CUSTOM_01", "valor para el custom field 0001" },
+                { "FIELD_CUSTOM_02", "valor para el custom field 0002" },
+                { "FIELD_CUSTOM_03", "1977" }
+            };
+
+            var personalizations = new List<Personalization>
+            {
+                new Personalization
+                {
+                    TemplateData = substitutionsValues
+                }
+            };
+
+            TrackingSettings trackingSettings = new TrackingSettings
+            {
+                ClickTracking = new ClickTracking()
+                {
+                    Enable = true,
+                    EnableText = false
+                },
+                OpenTracking = new OpenTracking()
+                {
+                    Enable = true,
+                    SubstitutionTag = "<n5origin>"
+                },
+                SubscriptionTracking = new SubscriptionTracking
+                {
+                    Enable = true,
+                    Text = "text to insert into the text/plain portion of the message",
+                    Html = "<bold>HTML to insert into the text/html portion of the message</bold>",
+                    SubstitutionTag = "text to insert into the text/plain portion of the message"
+                },
+                Ganalytics = new Ganalytics()
+                {
+                    Enable = true,
+                    UtmCampaign = "some campaign",
+                    UtmContent = "some content",
+                    UtmMedium = "some medium",
+                    UtmTerm = "n5campaign",
+                    UtmSource = publicHostUrl + "/N5NotificationSms/getUTMLink"
+                }
+            };
+
+            var msg = new SendGridMessage
+            {
+                From = from,
+                ReplyTo = to,
+                Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
+                PlainTextContent = "and easy to do anywhere, even with C#",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e",
+                Personalizations = personalizations,
+                TrackingSettings = trackingSettings
             };
 
             msg.Contents = new List<Content>(){
