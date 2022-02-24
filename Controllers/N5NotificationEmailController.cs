@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using TwilioPOC.Model;
+using TwilioPOC.Parser;
 
 namespace TwilioPOC.Controllers
 {
@@ -10,14 +14,9 @@ namespace TwilioPOC.Controllers
     {
         [HttpPost]
         [Route("status")]
-        public IActionResult ActionPost()
+        public async Task<IActionResult> Events()
         {
-            // Log the message id and status
-            var smsSid = Request.Form["MessageSid"];
-            var messageStatus = Request.Form["MessageStatus"];
-            var logMessage = $"\"{smsSid}\", \"{messageStatus}\"";
-
-            Trace.WriteLine(logMessage);
+            IEnumerable<Event> events = await EventParser.ParseAsync(Request.Body);
             return Ok();
         }
 
