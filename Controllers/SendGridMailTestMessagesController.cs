@@ -1,128 +1,87 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Twilio;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio.Rest.Api.V2010.Account.Message;
+using TwilioPOC.Types;
 
 namespace TwilioPOC.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TiwlioMessagesController : ControllerBase
+    public class SendGridMailTestMessagesController : ControllerBase
     {
-        private readonly string publicHostUrl = "https://b817-190-27-34-113.ngrok.io";
+        private string WebHookHostConfig
+        {
+            get
+            {
+                return _configuration.GetSection("WebHookNotification").GetSection("Host").Value;
+            }
+        }
 
         private readonly ISendGridClient _sendGridClient;
+        private readonly ILogger<TiwlioSMSTestMessagesController> _logger;
+        private readonly IConfiguration _configuration;
 
-        private readonly ILogger<TiwlioMessagesController> _logger;
+        private string ApiKey
+        {
+            get
+            {
+                return _configuration.GetValue<string>("SendGrid:Apikey");
+            }
+        }
 
-        private readonly string accountSid = "ACfd1997723266ad7462b086211656bc75";
-        private readonly string authToken = "7161b0dba4ad58cf52ebec5b208ca41b";
-
-
-        public TiwlioMessagesController(ILogger<TiwlioMessagesController> logger, ISendGridClient sendGridClient)
+        public SendGridMailTestMessagesController(ILogger<TiwlioSMSTestMessagesController> logger,
+                                        ISendGridClient sendGridClient,
+                                        IConfiguration configuration)
         {
             _logger = logger;
             _sendGridClient = sendGridClient;
+            _configuration = configuration;
         }
 
-        [HttpGet("{messageType}")]
-        public async Task<string> GetAsync(int messageType)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="emailType"></param>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> GetAsync([FromQuery] EmailQueryModel emailType)
         {
-            if (messageType <= -1)
-                throw new ArgumentException(" cannot be null or empty.");
-
-            if (messageType == 1)
+            Response result = null;
+            switch (emailType.EmailType)
             {
-                SendSMS();
-            }
-            else if (messageType == 2)
-            {
-                SendWhatsApp();
-            }
-            else if (messageType == 3)
-            {
-                await SendEmailWithTemplateAndCustomFieldsAsync();
+                case EmailType.WithOutTemplate:
+                    result = await SendEmailWithOutTemplateAsync();
+                    break;
 
-                await SendEmailWithTemplateAndCustomFieldsAndTrackingAsync();
+                case EmailType.WithOutTemplateAndTracking:
+                    result = await SendEmailWithOutTemplateAndTrackingAsync();
+                    break;
 
-                await SendEmailWithTemplateAsync();
-                await SendEmailWithTemplateAndTrackingAsync();
+                case EmailType.WithTemplate:
+                    result = await SendEmailWithTemplateAsync();
+                    break;
 
-                await SendEmailWithOutTemplateAsync();
-                await SendEmailWithOutTemplateAndTrackingAsync();
+                case EmailType.WithTemplateAndTracking:
+                    result = await SendEmailWithTemplateAndTrackingAsync();
+                    break;
+
+                case EmailType.WithTemplateAndCustomerFields:
+                    result = await SendEmailWithTemplateAndCustomFieldsAsync();
+                    break;
+
+                case EmailType.WithTemplateAndCustomerAndTrackingFields:
+                    result = await SendEmailWithTemplateAndCustomFieldsAndTrackingAsync();
+                    break;
             }
-            return "mensaje enviado";
+            return Ok(result);
         }
 
-        private void SendWhatsApp()
-        {
-            TwilioClient.Init(accountSid, authToken);
-            var message = MessageResource.Create(
-                body: "Hello there!",
-                from: new Twilio.Types.PhoneNumber("whatsapp:+19034033069"),
-                to: new Twilio.Types.PhoneNumber("whatsapp:+573186496074")
-            );
-
-            Console.WriteLine(message.Sid);
-        }
-
-        private void SendSMS()
-        {
-            // Example get status from message
-            const string feedback = "SMce7f4a23286f43958264be396ea7dbba";
-            const string messagewithLink = "SMfb32b0e5fe4c4f418fbefc69a9a48642";
-
-            var mediaUrl = new[]
-            {
-                new Uri("https://demo.twilio.com/owl.png")
-            }.ToList();
-
-            string accountSid = "ACfd1997723266ad7462b086211656bc75";
-            string authToken = "7161b0dba4ad58cf52ebec5b208ca41b";
-            TwilioClient.Init(accountSid, authToken);
-
-
-            //1.  Example with get status on callback. OK
-            var messageCallBack = MessageResource.Create(
-                body: "messageCallBack",
-                from: new Twilio.Types.PhoneNumber("+19034033069"),
-                to: new Twilio.Types.PhoneNumber("+573186496074"),
-                statusCallback: new Uri(publicHostUrl + "/N5NotificationSms/status")
-            );
-
-            //2.  Confirm with link
-            var messageWithLink = MessageResource.Create(
-                body: "Open to confirm: " + publicHostUrl + "/N5NotificationSms/getOpenLink/" + Guid.NewGuid().ToString(),
-                from: new Twilio.Types.PhoneNumber("+19034033069"),
-                to: new Twilio.Types.PhoneNumber("+573186496074"),
-                provideFeedback: true,
-                statusCallback: new Uri(publicHostUrl + "/N5NotificationSms/status")
-            );
-
-            //media message
-            var mediaMessage = MessageResource.Create(
-                body: "hola normal message",
-                from: new Twilio.Types.PhoneNumber("+19034033069"),
-                to: new Twilio.Types.PhoneNumber("+573186496074"),
-                mediaUrl: mediaUrl
-                );
-
-
-            //// Send Feedback to Twilio
-            const string normalsid = "MM14b598f894604b1ca2ff98f360b7dcdd";
-            FeedbackResource.Create(normalsid, outcome: FeedbackResource.OutcomeEnum.Confirmed);
-
-        }
-
-        private async Task SendEmailWithOutTemplateAndTrackingAsync()
+        private async Task<Response> SendEmailWithOutTemplateAndTrackingAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Javier");
@@ -156,7 +115,7 @@ namespace TwilioPOC.Controllers
                     UtmContent = "some content",
                     UtmMedium = "some medium",
                     UtmTerm = "n5campaign",
-                    UtmSource = publicHostUrl + "/N5NotificationSms/getUTMLink"
+                    UtmSource = WebHookHostConfig + "/N5NotificationSms/getUTMLink"
                 }
             };
             var msg = new SendGridMessage
@@ -165,34 +124,34 @@ namespace TwilioPOC.Controllers
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
                 TrackingSettings = trackingSettings,
             };
+
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
             var response = await _sendGridClient.SendEmailAsync(msg).ConfigureAwait(false);
-            Console.WriteLine(response.Headers);
+            return response;
         }
 
-        private async Task SendEmailWithOutTemplateAsync()
+        private async Task<Response> SendEmailWithOutTemplateAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Javier");
-
             var msg = new SendGridMessage
             {
                 From = from,
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
             };
 
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
             var response = await _sendGridClient.SendEmailAsync(msg).ConfigureAwait(false);
-            Console.WriteLine(response.Headers);
+            return response;
         }
 
-        private async Task SendEmailWithTemplateAsync()
+        private async Task<Response> SendEmailWithTemplateAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
@@ -202,7 +161,7 @@ namespace TwilioPOC.Controllers
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
                 TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e"
             };
 
@@ -213,13 +172,12 @@ namespace TwilioPOC.Controllers
             };
 
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
-            var client = new SendGridClient("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");
+            var client = new SendGridClient(ApiKey);
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-
-            Console.WriteLine(response.Headers);
+            return response;
         }
 
-        private async Task SendEmailWithTemplateAndCustomFieldsAsync()
+        private async Task<Response> SendEmailWithTemplateAndCustomFieldsAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
@@ -244,7 +202,7 @@ namespace TwilioPOC.Controllers
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
                 TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e",
                 Personalizations = personalizations
             };
@@ -256,13 +214,12 @@ namespace TwilioPOC.Controllers
             };
 
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
-            var client = new SendGridClient("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");
+            var client = new SendGridClient(ApiKey);
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-
-            Console.WriteLine(response.Headers);
+            return response;
         }
 
-        private async Task SendEmailWithTemplateAndCustomFieldsAndTrackingAsync()
+        private async Task<Response> SendEmailWithTemplateAndCustomFieldsAndTrackingAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
@@ -307,7 +264,7 @@ namespace TwilioPOC.Controllers
                     UtmContent = "some content",
                     UtmMedium = "some medium",
                     UtmTerm = "n5campaign",
-                    UtmSource = publicHostUrl + "/N5NotificationSms/getUTMLink"
+                    UtmSource = WebHookHostConfig + "/N5NotificationSms/getUTMLink"
                 }
             };
 
@@ -317,7 +274,7 @@ namespace TwilioPOC.Controllers
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
                 TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e",
                 Personalizations = personalizations,
                 TrackingSettings = trackingSettings
@@ -330,13 +287,12 @@ namespace TwilioPOC.Controllers
             };
 
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
-            var client = new SendGridClient("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");
+            var client = new SendGridClient(ApiKey);
             var response = await client.SendEmailAsync(msg).ConfigureAwait(false);
-
-            Console.WriteLine(response.Headers);
+            return response;
         }
 
-        private async Task SendEmailWithTemplateAndTrackingAsync()
+        private async Task<Response> SendEmailWithTemplateAndTrackingAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Javier");
@@ -370,16 +326,8 @@ namespace TwilioPOC.Controllers
                     UtmContent = "some content",
                     UtmMedium = "some medium",
                     UtmTerm = "n5campaign",
-                    UtmSource = publicHostUrl + "/N5NotificationSms/getUTMLink"
+                    UtmSource = WebHookHostConfig + "/N5NotificationSms/getUTMLink"
                 }
-            };
-
-            //FIELD_CUSTOM_01  FIELD_CUSTOM_02 FIELD_CUSTOM_03
-            Dictionary<string, string> substitutionsValues = new Dictionary<string, string>
-            {
-                { "FIELD_CUSTOM_01", "valor para el custom field 0001" },
-                { "FIELD_CUSTOM_02", "valor para el custom field 0002" },
-                { "FIELD_CUSTOM_03", "1977" }
             };
 
             var msg = new SendGridMessage
@@ -388,16 +336,14 @@ namespace TwilioPOC.Controllers
                 ReplyTo = to,
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
-                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + publicHostUrl + "/N5Notification/getUTMLink'>subscribir</a>",
+                HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
                 TemplateId = "d-83a06542e45749cdbb88e75eaa78be5a",
                 TrackingSettings = trackingSettings,
             };
-            // msg.AddSubstitutions(substitutionsValues, 0);
+
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));
-
             var response = await _sendGridClient.SendEmailAsync(msg).ConfigureAwait(true);
-
-            Console.WriteLine(response.Headers);
+            return response;
         }
     }
 }

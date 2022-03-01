@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,14 +18,20 @@ namespace TwilioPOC.Controllers
         public async Task<IActionResult> Events()
         {
             IEnumerable<Event> events = await EventParser.ParseAsync(Request.Body);
-            return Ok();
+            var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(events);
+            Log.Information("\n\t\t\t\t EMAIL Status");
+            Log.Information(jsonResult);
+            Log.Information("\n");
+
+            return Ok(jsonResult);
         }
 
         [HttpGet]
         [Route("getOpenLink/{id}")]
         public IActionResult GetOpenLink(string id)
         {
-            Trace.WriteLine(id);
+            var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(id);
+            Log.Information(jsonResult);
             return Ok();
         }
 
@@ -35,6 +42,5 @@ namespace TwilioPOC.Controllers
             string messageStatus = Guid.NewGuid().ToString();
             return Ok(messageStatus);
         }
-
     }
 }

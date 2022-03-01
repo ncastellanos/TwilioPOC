@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using System.Diagnostics;
+using TwilioPOC.Model;
 
 namespace TwilioPOC.Controllers
 {
@@ -11,13 +13,25 @@ namespace TwilioPOC.Controllers
         [Route("status")]
         public IActionResult ActionPost()
         {
-            // Log the message id and status
-            var smsSid = Request.Form["MessageSid"];
-            var messageStatus = Request.Form["MessageStatus"];
-            var logMessage = $"\"{smsSid}\", \"{messageStatus}\"";
+            var c = 0;
+            NotificationSmsRequest result = new NotificationSmsRequest
+            {
+                SmsSid = Request.Form["SmsSid"][0].ToString(),
+                SmsStatus = Request.Form["SmsStatus"][0].ToString(),
+                MessageStatus = Request.Form["MessageStatus"][0].ToString(),
+                To = Request.Form["To"][0].ToString(),
+                MessageSid = Request.Form["MessageSid"][0].ToString(),
+                AccountSid = Request.Form["AccountSid"][0].ToString(),
+                From = Request.Form["From"][0].ToString(),
+                ApiVersion = Request.Form["ApiVersion"][0].ToString()
+            };
 
-            Trace.WriteLine(logMessage);
-            return Ok();
+            var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result);
+            Log.Information("\n\t\t\t\t SMS Status Message:  ");
+            Log.Information(jsonResult);
+            Log.Information("\n");
+
+            return Ok(result);
         }
 
         [HttpGet]

@@ -1,14 +1,36 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<UserSecretsId>b2c5843a-21fe-4727-a62f-64242a31ef44</UserSecretsId>
+		<RootNamespace>$(MSBuildProjectName)</RootNamespace>
+		<GenerateDocumentationFile>False</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="SendGrid" Version="9.25.3" />
-    <PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />
-    <PackageReference Include="Twilio" Version="5.71.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
+		<PackageReference Include="EnvSettings" Version="3.0.0" />
+		<PackageReference Include="Figgle" Version="0.3.0" />
+		<PackageReference Include="Microsoft.AspNet.WebApi.Core.es" Version="5.2.7" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+		<PackageReference Include="SendGrid" Version="9.25.3" />
+		<PackageReference Include="SendGrid.Extensions.DependencyInjection" Version="1.0.1" />
+		<PackageReference Include="Steeltoe.Extensions.Configuration.ConfigServerCore" Version="3.1.3" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="6.2.3" />
+		<PackageReference Include="Swashbuckle.Core" Version="5.6.0" />
+		<PackageReference Include="Twilio" Version="5.71.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+		<PackageReference Include="Serilog.Sinks.ElasticSearch" Version="8.1.0" />
+		<PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="3.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="Configuration\appsettings.dev.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
 
 
 </Project>

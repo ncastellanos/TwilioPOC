@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -12,23 +13,39 @@ namespace TwilioPOC.Controllers
     [Route("[controller]")]
     public class ReportController : ControllerBase
     {
-        private readonly ILogger<TiwlioMessagesController> _logger;
+        private readonly ILogger<TiwlioSMSTestMessagesController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public ReportController(ILogger<TiwlioMessagesController> logger)
+        private string AccountSid
+        {
+            get
+            {
+                return _configuration.GetSection("Twilio").GetSection("accountSid").Value;
+            }
+        }
+
+        private string AuthToken
+        {
+            get
+            {
+                return _configuration.GetSection("Twilio").GetSection("authToken").Value;
+            }
+        }
+
+        public ReportController(ILogger<TiwlioSMSTestMessagesController> logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
         }
 
         [HttpGet]
         [Route("getAll")]
         public List<MessageResource> Get()
         {
-            string accountSid = "ACfd1997723266ad7462b086211656bc75";
-            string authToken = "7161b0dba4ad58cf52ebec5b208ca41b";
-
-            TwilioClient.Init(accountSid, authToken);
+            TwilioClient.Init(AccountSid, AuthToken);
             var messages = MessageResource.Read(
-                dateSent: new DateTime(2022, 2, 22),
+                dateSentBefore: new DateTime(2022, 11, 22),
+                dateSentAfter: new DateTime(2022, 2, 21),
                 from: new Twilio.Types.PhoneNumber("+19034033069"),
                 to: new Twilio.Types.PhoneNumber("+573186496074"),
                 limit: 20
@@ -36,6 +53,5 @@ namespace TwilioPOC.Controllers
 
             return messages.ToList();
         }
-
     }
 }

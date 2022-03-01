@@ -3,28 +3,46 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 using SendGrid.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
+using TwilioPOC.Infraestructure;
+using TwilioPOC.Model.Swagger;
+using Newtonsoft.Json.Converters;
 
 namespace TwilioPOC
 {
     public class Startup
     {
+        private readonly IConfiguration _configuration;
+
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddServicesInAssembly(_configuration);
             services.AddControllers();
+            services.AddMvc().
+                AddNewtonsoftJson(opts =>
+                {
+                    opts.SerializerSettings.Converters.Add(new StringEnumConverter());
+                });
+            services.AddSwaggerGenNewtonsoftSupport();
+
 
             services.AddSendGrid(options =>
             {
-                options.ApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY") ?? Configuration["SendGrid:ApiKey"];
+                options.ApiKey = _configuration.GetSection("SendGrid").GetSection("ApiKey").Value;
+            });
+
+            // Configure Swagger
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "N5 Poc Twilio API", Version = "V1" });
+                c.DescribeAllParametersInCamelCase();
             });
         }
 
@@ -37,15 +55,21 @@ namespace TwilioPOC
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            // Use swagger Doc
+            app.UseSwagger(c => { });
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "N5 Examples Twilio and Send Grid");
+            });
+
         }
     }
 }
