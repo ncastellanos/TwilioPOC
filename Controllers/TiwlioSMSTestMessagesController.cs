@@ -86,6 +86,10 @@ namespace TwilioPOC.Controllers
                     var resultFeedback = SendWithConfirmationToTwilio(fullNumber);
                     _logger.LogInformation(resultFeedback.MessageSid);
                     break;
+
+                case SMSType.WithScheduled:
+                    result = await SendWithScheduled(fullNumber);
+                    break;
             }
 
             var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result);
@@ -94,6 +98,19 @@ namespace TwilioPOC.Controllers
             Log.Information("\n");
 
             return Ok(result);
+        }
+
+        private async Task<MessageResource> SendWithScheduled(string fullNumber)
+        {
+            TwilioClient.Init(AccountSid, AuthToken);
+            MessageResource messageCallBack = await MessageResource.CreateAsync(
+                body: "message simple sms",
+                from: new Twilio.Types.PhoneNumber("+19034033069"),
+                to: new Twilio.Types.PhoneNumber(fullNumber),
+                scheduleType: MessageResource.ScheduleTypeEnum.Fixed,
+                sendAt: new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, System.Globalization.Calendar.CurrentEra, 1, 1)
+            );
+            return messageCallBack;
         }
 
         private async Task<MessageResource> SendWithoutMediaFiles(string fullNumber)
@@ -107,11 +124,10 @@ namespace TwilioPOC.Controllers
             return messageCallBack;
         }
 
-        private FeedbackResource SendWithConfirmationToTwilio(string fullNumber)
+        private FeedbackResource SendWithConfirmationToTwilio(string messageId)
         {
             TwilioClient.Init(AccountSid, AuthToken);
-            const string normalsid = "MM14b598f894604b1ca2ff98f360b7dcdd";
-            var response = FeedbackResource.Create(normalsid, outcome: FeedbackResource.OutcomeEnum.Confirmed);
+            var response = FeedbackResource.Create(messageId, outcome: FeedbackResource.OutcomeEnum.Confirmed);
             return response;
         }
 

@@ -49,10 +49,10 @@ namespace TwilioPOC.Controllers
         /// <param name="emailType"></param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<IActionResult> GetAsync([FromQuery] EmailQueryModel emailType)
+        public async Task<IActionResult> GetAsync([FromQuery] EmailType emailType)
         {
             Response result = null;
-            switch (emailType.EmailType)
+            switch (emailType)
             {
                 case EmailType.WithOutTemplate:
                     result = await SendEmailWithOutTemplateAsync();
@@ -75,7 +75,7 @@ namespace TwilioPOC.Controllers
                     break;
 
                 case EmailType.WithTemplateAndCustomerAndTrackingFields:
-                    result = await SendEmailWithTemplateAndCustomFieldsAndTrackingAsync();
+                    result = await SendEmailWithTemplateCustomFieldsAndTrackingAsync();
                     break;
             }
             return Ok(result);
@@ -219,7 +219,7 @@ namespace TwilioPOC.Controllers
             return response;
         }
 
-        private async Task<Response> SendEmailWithTemplateAndCustomFieldsAndTrackingAsync()
+        private async Task<Response> SendEmailWithTemplateCustomFieldsAndTrackingAsync()
         {
             var from = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
             var to = new EmailAddress("norberto.castellanos@n5now.com", "Norberto Castellanos");
@@ -318,7 +318,7 @@ namespace TwilioPOC.Controllers
                     Html = "<bold>HTML to insert into the text/html portion of the message</bold>",
                     SubstitutionTag = "text to insert into the text/plain portion of the message"
                 },
-
+                
                 Ganalytics = new Ganalytics()
                 {
                     Enable = true,
@@ -337,8 +337,8 @@ namespace TwilioPOC.Controllers
                 Subject = "Sending with Twilio SendGrid is Fun hiring for funny",
                 PlainTextContent = "and easy to do anywhere, even with C#",
                 HtmlContent = "<strong>and easy to do anywhere, even with C#</strong><a href='" + WebHookHostConfig + "/N5Notification/getUTMLink'>subscribir</a>",
-                TemplateId = "d-83a06542e45749cdbb88e75eaa78be5a",
-                TrackingSettings = trackingSettings,
+                TemplateId = "d-20f7065ae52a4412b9fed5f7796d030e",
+                TrackingSettings = trackingSettings
             };
 
             msg.AddTo(new EmailAddress("norberto.castellanos@gmail.com", "Norberto javier"));

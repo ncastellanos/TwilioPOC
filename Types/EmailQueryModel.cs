@@ -1,28 +1,21 @@
 ﻿using Newtonsoft.Json.Converters;
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace TwilioPOC.Types
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum EmailType
     {
-        WithOutTemplate,
+        WithOutTemplate = 1,
 
-        WithOutTemplateAndTracking,
+        WithOutTemplateAndTracking = 2,
 
-        WithTemplate,
+        WithTemplate = 3,
 
-        WithTemplateAndTracking,
+        WithTemplateAndTracking = 4,
 
-        WithTemplateAndCustomerFields,
-        
-        WithTemplateAndCustomerAndTrackingFields
-    }
+        WithTemplateAndCustomerFields = 5,
 
-    public class EmailQueryModel
-    {
-        [Required]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public EmailType EmailType { get; set; }
+        WithTemplateAndCustomerAndTrackingFields = 6
     }
 }

@@ -10,6 +10,7 @@ namespace TwilioPOC.Types
         WithMediaFiles = 2,
         WithNotificationCallBack = 3,
         WithOpenLinkconfirmation = 4,
-        WithSendconfirmationToTwilio = 5
+        WithSendconfirmationToTwilio = 5,
+        WithScheduled = 6
     }
 }

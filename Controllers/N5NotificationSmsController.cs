@@ -13,7 +13,6 @@ namespace TwilioPOC.Controllers
         [Route("status")]
         public IActionResult ActionPost()
         {
-            var c = 0;
             NotificationSmsRequest result = new NotificationSmsRequest
             {
                 SmsSid = Request.Form["SmsSid"][0].ToString(),
@@ -27,7 +26,7 @@ namespace TwilioPOC.Controllers
             };
 
             var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result);
-            Log.Information("\n\t\t\t\t SMS Status Message:  ");
+            Log.Information("\n\t\t\t\t NOTIFICATION SMS Status Message:  ");
             Log.Information(jsonResult);
             Log.Information("\n");
 

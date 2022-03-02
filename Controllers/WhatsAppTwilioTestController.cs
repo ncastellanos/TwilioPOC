@@ -35,16 +35,33 @@ namespace TwilioPOC.Controllers
         }
 
         [HttpGet]
-        public IActionResult SendTest()
+        [Route("simpleWhatsAppMessage")]
+        public IActionResult SendTest(string fullNumber)
         {
+            string numberTo = string.Concat("whatsapp:", fullNumber);
             TwilioClient.Init(AccountSid, AuthToken);
-            var messageOptions = new CreateMessageOptions(new PhoneNumber("whatsapp:+573186496074"))
-            {
-                From = new PhoneNumber("whatsapp:+14155238886"),
-                Body = "Tes de mensaje para campañas http://www.yummycupcakes.com/"
-            };
+            var message = MessageResource.Create(
+                from: new PhoneNumber("whatsapp:+14155238886"),
+                body: "Hello, there!",
+                to: new PhoneNumber(numberTo)
+                );
 
-            var message = MessageResource.Create(messageOptions);
+            return Ok(message);
+        }
+
+        [HttpGet]
+        [Route("scheduled")]
+        public IActionResult SendTestScheduled(string fullNumber)
+        {
+            string numberTo = string.Concat("whatsapp:", fullNumber);
+            TwilioClient.Init(AccountSid, AuthToken);
+            var message = MessageResource.Create(
+                from: new PhoneNumber("whatsapp:+14155238886"),
+                body: "Hello, there!",
+                to: new PhoneNumber(numberTo),
+                scheduleType: MessageResource.ScheduleTypeEnum.Fixed,
+                sendAt: new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day + 2, System.Globalization.Calendar.CurrentEra, 1, 1)
+                );
             return Ok(message);
         }
     }

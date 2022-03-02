@@ -19,7 +19,7 @@ namespace TwilioPOC.Controllers
         {
             IEnumerable<Event> events = await EventParser.ParseAsync(Request.Body);
             var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(events);
-            Log.Information("\n\t\t\t\t EMAIL Status");
+            Log.Information("\n\t\t\t\t NOTIFICATION EMAIL Status");
             Log.Information(jsonResult);
             Log.Information("\n");
 

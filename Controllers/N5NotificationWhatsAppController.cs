@@ -27,7 +27,7 @@ namespace TwilioPOC.Controllers
                 ChannelInstallSid = Request.Form["ChannelInstallSid"][0].ToString()
             };
             var jsonResult = Newtonsoft.Json.JsonConvert.SerializeObject(result);
-            Log.Information("\n\t\t\t\t WhatsApp Status Message:  ");
+            Log.Information("\n\t\t\t\t NOTIFICATION WhatsApp Status Message:  ");
             Log.Information(jsonResult);
             Log.Information("\n");
 

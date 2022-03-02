@@ -45,13 +45,24 @@ namespace TwilioPOC.Controllers
             TwilioClient.Init(AccountSid, AuthToken);
             var messages = MessageResource.Read(
                 dateSentBefore: new DateTime(2022, 11, 22),
-                dateSentAfter: new DateTime(2022, 2, 21),
+                dateSentAfter: new DateTime(2022, 3, 2),
                 from: new Twilio.Types.PhoneNumber("+19034033069"),
                 to: new Twilio.Types.PhoneNumber("+573186496074"),
-                limit: 20
+                limit: 100
             );
 
             return messages.ToList();
         }
+
+        [HttpGet]
+        [Route("getByMessageSid")]
+        public MessageResource GetByMessageId(string messageSID)
+        {
+            //"SM26b1153c791146cb833b9c0f847f9989"
+            TwilioClient.Init(AccountSid, AuthToken);
+            var message = MessageResource.Fetch(pathSid: messageSID);
+            return message;
+        }
+
     }
 }
